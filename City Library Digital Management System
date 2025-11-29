@@ -1,0 +1,89 @@
+import java.io.*;
+import java.util.*;
+
+// -------------------------------
+// BOOK CLASS
+// -------------------------------
+class Book implements Serializable, Comparable<Book> {
+    int bookId;
+    String title, author, category;
+    boolean isIssued;
+
+    public Book(int id, String t, String a, String c) {
+        bookId = id;
+        title = t;
+        author = a;
+        category = c;
+        isIssued = false;
+    }
+
+    public void markAsIssued() { isIssued = true; }
+    public void markAsReturned() { isIssued = false; }
+
+    public void displayBookDetails() {
+        System.out.println(bookId + " | " + title + " | " + author + 
+                           " | " + category + " | Issued: " + isIssued);
+    }
+
+    // Sort by title
+    public int compareTo(Book b) { 
+        return this.title.compareToIgnoreCase(b.title); 
+    }
+}
+
+// -------------------------------
+// MEMBER CLASS
+// -------------------------------
+class Member implements Serializable {
+    int memberId;
+    String name, email;
+    List<Integer> issuedBooks = new ArrayList<>();
+
+    public Member(int id, String n, String e) {
+        memberId = id;
+        name = n;
+        email = e;
+    }
+
+    public void addIssuedBook(int bookId) { issuedBooks.add(bookId); }
+    public void returnIssuedBook(int bookId) { 
+        issuedBooks.remove(Integer.valueOf(bookId)); 
+    }
+
+    public void displayMemberDetails() {
+        System.out.println(memberId + " | " + name + " | " + email + 
+                           " | Issued Books: " + issuedBooks);
+    }
+}
+
+// -------------------------------
+// LIBRARY MANAGER CLASS
+// -------------------------------
+class LibraryManager {
+    Map<Integer, Book> books = new HashMap<>();
+    Map<Integer, Member> members = new HashMap<>();
+
+    // Add Book
+    public void addBook(Book b) {
+        books.put(b.bookId, b);
+        saveToFile();
+        System.out.println("Book Added Successfully!");
+    }
+
+    // Add Member
+    public void addMember(Member m) {
+        members.put(m.memberId, m);
+        saveToFile();
+        System.out.println("Member Added Successfully!");
+    }
+
+    // Issue Book
+    public void issueBook(int bookId, int memberId) {
+        Book b = books.get(bookId);
+        Member m = members.get(memberId);
+
+        if (b != null && m != null && !b.isIssued) {
+            b.markAsIssued();
+            m.addIssuedBook(bookId);
+            saveToFile();
+            System.
