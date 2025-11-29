@@ -1,0 +1,241 @@
+import java.io.*;
+import java.util.*;
+
+// -------------------------------
+// BOOK CLASS
+// -------------------------------
+class Book implements Serializable, Comparable<Book> {
+    int bookId;
+    String title, author, category;
+    boolean isIssued;
+
+    public Book(int id, String t, String a, String c) {
+        bookId = id;
+        title = t;
+        author = a;
+        category = c;
+        isIssued = false;
+    }
+
+    public void markAsIssued() { isIssued = true; }
+    public void markAsReturned() { isIssued = false; }
+
+    public void displayBookDetails() {
+        System.out.println(bookId + " | " + title + " | " + author + 
+                           " | " + category + " | Issued: " + isIssued);
+    }
+
+    // Sort by title
+    public int compareTo(Book b) { 
+        return this.title.compareToIgnoreCase(b.title); 
+    }
+}
+
+// -------------------------------
+// MEMBER CLASS
+// -------------------------------
+class Member implements Serializable {
+    int memberId;
+    String name, email;
+    List<Integer> issuedBooks = new ArrayList<>();
+
+    public Member(int id, String n, String e) {
+        memberId = id;
+        name = n;
+        email = e;
+    }
+
+    public void addIssuedBook(int bookId) { issuedBooks.add(bookId); }
+    public void returnIssuedBook(int bookId) { 
+        issuedBooks.remove(Integer.valueOf(bookId)); 
+    }
+
+    public void displayMemberDetails() {
+        System.out.println(memberId + " | " + name + " | " + email + 
+                           " | Issued Books: " + issuedBooks);
+    }
+}
+
+// -------------------------------
+// LIBRARY MANAGER CLASS
+// -------------------------------
+class LibraryManager {
+    Map<Integer, Book> books = new HashMap<>();
+    Map<Integer, Member> members = new HashMap<>();
+
+    // Add Book
+    public void addBook(Book b) {
+        books.put(b.bookId, b);
+        saveToFile();
+        System.out.println("Book Added Successfully!");
+    }
+
+    // Add Member
+    public void addMember(Member m) {
+        members.put(m.memberId, m);
+        saveToFile();
+        System.out.println("Member Added Successfully!");
+    }
+
+    // Issue Book
+    public void issueBook(int bookId, int memberId) {
+        Book b = books.get(bookId);
+        Member m = members.get(memberId);
+
+        if (b != null && m != null && !b.isIssued) {
+            b.markAsIssued();
+            m.addIssuedBook(bookId);
+            saveToFile();
+            System.out.println("Book Issued Successfully!");
+        } else {
+            System.out.println("Issue Failed! Book might be already issued or invalid IDs.");
+        }
+    }
+
+    // Return Book
+    public void returnBook(int bookId, int memberId) {
+        Book b = books.get(bookId);
+        Member m = members.get(memberId);
+
+        if (b != null && m != null) {
+            b.markAsReturned();
+            m.returnIssuedBook(bookId);
+            saveToFile();
+            System.out.println("Book Returned Successfully!");
+        } else {
+            System.out.println("Return Failed!");
+        }
+    }
+
+    // Search Books
+    public void searchBooks(String key) {
+        for (Book b : books.values()) {
+            if (b.title.toLowerCase().contains(key.toLowerCase()) ||
+                b.author.toLowerCase().contains(key.toLowerCase()) ||
+                b.category.toLowerCase().contains(key.toLowerCase())) {
+                b.displayBookDetails();
+            }
+        }
+    }
+
+    // Sort Books by Title
+    public void sortBooks() {
+        List<Book> list = new ArrayList<>(books.values());
+        Collections.sort(list);
+        for (Book b : list) b.displayBookDetails();
+    }
+
+    // Save Data to File
+    public void saveToFile() {
+        try {
+            ObjectOutputStream out1 = new ObjectOutputStream(new FileOutputStream("books.dat"));
+            out1.writeObject(books);
+            out1.close();
+
+            ObjectOutputStream out2 = new ObjectOutputStream(new FileOutputStream("members.dat"));
+            out2.writeObject(members);
+            out2.close();
+        } catch (Exception e) {
+            System.out.println("Error saving data.");
+        }
+    }
+
+    // Load Data
+    public void loadFromFile() {
+        try {
+            ObjectInputStream in1 = new ObjectInputStream(new FileInputStream("books.dat"));
+            books = (Map<Integer, Book>) in1.readObject();
+            in1.close();
+
+            ObjectInputStream in2 = new ObjectInputStream(new FileInputStream("members.dat"));
+            members = (Map<Integer, Member>) in2.readObject();
+            in2.close();
+
+        } catch (Exception e) { }
+    }
+}
+
+// -------------------------------
+// MAIN CLASS WITH MENU
+// -------------------------------
+public class Main {
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        LibraryManager lm = new LibraryManager();
+        lm.loadFromFile();
+
+        while (true) {
+            System.out.println("\n===== City Library Digital Management System =====");
+            System.out.println("1. Add Book");
+            System.out.println("2. Add Member");
+            System.out.println("3. Issue Book");
+            System.out.println("4. Return Book");
+            System.out.println("5. Search Books");
+            System.out.println("6. Sort Books");
+            System.out.println("7. Exit");
+            System.out.print("Enter choice: ");
+
+            int ch = sc.nextInt();
+            sc.nextLine();  
+
+            switch (ch) {
+                case 1:
+                    System.out.print("Enter Title: ");
+                    String t = sc.nextLine();
+                    System.out.print("Enter Author: ");
+                    String a = sc.nextLine();
+                    System.out.print("Enter Category: ");
+                    String c = sc.nextLine();
+                    int id = new Random().nextInt(900) + 100;
+                    lm.addBook(new Book(id, t, a, c));
+                    System.out.println("Book ID Assigned: " + id);
+                    break;
+
+                case 2:
+                    System.out.print("Enter Name: ");
+                    String name = sc.nextLine();
+                    System.out.print("Enter Email: ");
+                    String email = sc.nextLine();
+                    int mid = new Random().nextInt(900) + 100;
+                    lm.addMember(new Member(mid, name, email));
+                    System.out.println("Member ID Assigned: " + mid);
+                    break;
+
+                case 3:
+                    System.out.print("Enter Book ID: ");
+                    int bid = sc.nextInt();
+                    System.out.print("Enter Member ID: ");
+                    int mm = sc.nextInt();
+                    lm.issueBook(bid, mm);
+                    break;
+
+                case 4:
+                    System.out.print("Enter Book ID: ");
+                    bid = sc.nextInt();
+                    System.out.print("Enter Member ID: ");
+                    mm = sc.nextInt();
+                    lm.returnBook(bid, mm);
+                    break;
+
+                case 5:
+                    System.out.print("Search Keyword: ");
+                    String key = sc.nextLine();
+                    lm.searchBooks(key);
+                    break;
+
+                case 6:
+                    lm.sortBooks();
+                    break;
+
+                case 7:
+                    lm.saveToFile();
+                    System.out.println("Exiting System...");
+                    return;
+
+                default:
+                    System.out.println("Invalid Choice!");
+            }
+        }
+    }
+}
